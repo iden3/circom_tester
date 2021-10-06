@@ -52,7 +52,9 @@ async function compile (fileName, options) {
     if (options.json) flags += "--json ";
     if (options.output) flags += "--output " + options.output + " ";
     
-    await exec("circom " + flags + fileName);
+    b = await exec("circom " + flags + fileName);
+    assert(b.stderr == "",
+	  "circom compiler error \n" + b.stderr);
 }
     
 class WasmTester {

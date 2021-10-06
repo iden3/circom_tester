@@ -9,10 +9,10 @@ const Fr = new F1Field(exports.p);
 
 const assert = chai.assert;
 
-describe("Exponentioation test", function () {
+describe("Simple test", function () {
     this.timeout(100000);
 
-    it("Should generate the Exponentiation table in k=0", async () => {
+    it("Checking the compilation of simple circuit", async () => {
 
         const circuit = await wasm_tester(path.join(__dirname, "Multiplier2.circom"));
         const w = await circuit.calculateWitness({a: 2, b: 4});
