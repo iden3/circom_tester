@@ -80,19 +80,22 @@ class WitnessCalculator {
 	this.version = this.instance.exports.getVersion();
         this.n32 = this.instance.exports.getFieldNumLen32();
 
-//        Not needed
-//        this.instance.exports.getRawPrime();
-//        const arr = new Array(this.n32);
-//        for (let i=0; i<this.n32; i++) {
-//            arr[this.n32-1-i] = this.instance.exports.readSharedRWMemory(i);
-//        }
-//        this.prime = utils.fromArray32(arr);
+        this.instance.exports.getRawPrime();
+        const arr = new Array(this.n32);
+        for (let i=0; i<this.n32; i++) {
+            arr[this.n32-1-i] = this.instance.exports.readSharedRWMemory(i);
+        }
+        this.prime = utils.fromArray32(arr);
 
         this.witnessSize = this.instance.exports.getWitnessSize();
 
         this.sanityCheck = sanityCheck;
     }
     
+    circom_version() {
+	return this.instance.exports.getVersion();
+    }
+
     async _doCalculateWitness(input, sanityCheck) {
 	//input is assumed to be a map from signals to arrays of bigints
         this.instance.exports.init((this.sanityCheck || sanityCheck) ? 1 : 0);
