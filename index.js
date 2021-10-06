@@ -1,2 +1,2 @@
-exports.wasm = import("./wasm/tester");
-exports.c = import("./c/tester");
+exports.wasm = require("./wasm/tester");
+//exports.c = require("./c/tester");

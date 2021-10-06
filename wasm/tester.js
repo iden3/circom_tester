@@ -51,7 +51,6 @@ async function compile (fileName, options) {
     if (options.r1cs) flags += "--r1cs ";
     if (options.json) flags += "--json ";
     if (options.output) flags += "--output " + options.output + " ";
-    console.log(circom + flags + fileName);
     
     await exec("circom " + flags + fileName);
 }
