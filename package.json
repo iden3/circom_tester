@@ -1,6 +1,6 @@
 {
   "name": "circom_tester",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Tools for testing circom circuits.",
   "main": "index.js",
   "scripts": {
