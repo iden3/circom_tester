@@ -11,9 +11,9 @@ const exec = util.promisify(require("child_process").exec);
 const loadR1cs = require("r1csfile").load;
 const ZqField = require("ffjavascript").ZqField;
 
-module.exports = wasm_tester;
+module.exports = c_tester;
 
-async function  wasm_tester(circomInput, _options) {
+async function  c_tester(circomInput, _options) {
 
     assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
     
