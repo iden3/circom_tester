@@ -46,7 +46,9 @@ async function compile (baseName, fileName, options) {
     if (options.r1cs) flags += "--r1cs ";
     if (options.json) flags += "--json ";
     if (options.output) flags += "--output " + options.output + " ";
-    
+    if (options.O === 0) flags += "--O0 "
+    if (options.O === 1) flags += "--O1 "
+
     b = await exec("circom " + flags + fileName); 
     assert(b.stderr == "",
 	   "circom compiler error \n" + b.stderr);
