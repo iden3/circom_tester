@@ -5,8 +5,7 @@ const fs = require("fs");
 var tmp = require("tmp-promise");
 const path = require("path");
 
-const util = require("util");
-const exec = util.promisify(require("child_process").exec);
+const { exec } = require("child_process");
 
 const loadR1cs = require("r1csfile").load;
 const ZqField = require("ffjavascript").ZqField;
@@ -15,27 +14,30 @@ module.exports = wasm_tester;
 
 async function  wasm_tester(circomInput, _options) {
 
-    assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
-    
+    const options = Object.assign(
+        // default
+        { compiler: "circom", json: false },
+        // user-defined
+        _options,
+        // may not be redefined by user
+        { wasm: true, sym: true, r1cs: true, circomVersion: "2.0.0" },
+    );
+
+    assert(await compiler_above_version(options), "Wrong compiler version. Must be at least 2.0.0");
+
     tmp.setGracefulCleanup();
 
-    const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
+    const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true, tmpdir: options.tmpdir});
+
+    options.input = !!options.basedir ? path.relative(options.basedir, circomInput) : circomInput;
+    options.output = !!options.basedir ? path.relative(options.basedir, dir.path) : dir.path;
 
     //console.log(dir.path);
 
-    const baseName = path.basename(circomInput, ".circom");
-    const options = Object.assign({}, _options);
+    const baseName = path.basename(options.input, ".circom");
 
-    options.wasm = true;
+    await compile(options);
 
-    options.sym = true;
-    options.json = options.json || false; // costraints in json format
-    options.r1cs = true;
-    options.output = dir.path;
-
-    await compile(circomInput, options);
-
-    const utils = require("./utils");
     const WitnessCalculator = require("./witness_calculator");
 
     const wasm = await fs.promises.readFile(path.join(dir.path, baseName+"_js/"+ baseName + ".wasm"));
@@ -45,8 +47,8 @@ async function  wasm_tester(circomInput, _options) {
     return new WasmTester(dir, baseName, wc);
 }
 
-async function compile (fileName, options) {    
-    var flags = "--wasm ";
+async function compile (options) {
+    var flags = " --wasm ";
     if (options.sym) flags += "--sym ";
     if (options.r1cs) flags += "--r1cs ";
     if (options.json) flags += "--json ";
@@ -54,11 +56,10 @@ async function compile (fileName, options) {
     if (options.O === 0) flags += "--O0 "
     if (options.O === 1) flags += "--O1 "
 
-    b = await exec("circom " + flags + fileName);
-    assert(b.stderr == "",
-	  "circom compiler error \n" + b.stderr);
+    b = await _exec(options.compiler + flags + options.input);
+    assert(b.err === null, "circom compiler error \n" + b.stderr || b.stdout);
 }
-    
+
 class WasmTester {
 
     constructor(dir, baseName, witnessCalculator) {
@@ -154,7 +155,7 @@ class WasmTester {
         }
 
         function checkConstraint(constraint) {
-	    
+
             const F = self.F;
             const a = evalLC(constraint[0]);
             const b = evalLC(constraint[1]);
@@ -179,23 +180,34 @@ class WasmTester {
 
 function version_to_list ( v ) {
     return v.split(".").map(function(x) {
-	return parseInt(x, 10);
+        return parseInt(x, 10);
     });
 }
 
 function check_versions ( v1, v2 ) {
     //check if v1 is newer than or equal to v2
     for (let i = 0; i < v2.length; i++) {
-	if (v1[i] > v2[i]) return true;
-	if (v1[i] < v2[i]) return false;
+        if (v1[i] > v2[i]) return true;
+        if (v1[i] < v2[i]) return false;
     }
     return true;
 }
 
-async function compiler_above_version(v) {
-    let output = await exec('circom --version').toString();
+async function compiler_above_version(options) {
+    let output = (await _exec(options.compiler + ' --version')).stdout.toString();
     let compiler_version = version_to_list(output.slice(output.search(/\d/),-1));
-    vlist = version_to_list(v);
-    return check_versions ( compiler_version, vlist );
+    vlist = version_to_list(options.circomVersion);
+    return check_versions(compiler_version, vlist);
 }
 
+async function _exec(cmd) {
+    return new Promise((resolve) => {
+        const res = {};
+        exec(cmd, (err, stdout, stderr) => {
+            res.err = err;
+            res.stdout = stdout;
+            res.stderr = stderr;
+            resolve(res);
+        });
+    });
+}
