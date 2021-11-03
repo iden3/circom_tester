@@ -15,7 +15,9 @@ describe("Simple test", function () {
 
     it("Checking the compilation of a simple circuit generating wasm", async () => {
 
-        const circuit = await wasm_tester(path.join(__dirname, "Multiplier2.circom"));
+        const input = path.join(__dirname, "Multiplier2.circom");
+        const opts = await getOptions(__dirname);
+        const circuit = await wasm_tester(input, opts);
         const w = await circuit.calculateWitness({a: 2, b: 4});
         await circuit.checkConstraints(w);
     });
