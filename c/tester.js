@@ -11,6 +11,8 @@ const exec = util.promisify(require("child_process").exec);
 const loadR1cs = require("r1csfile").load;
 const ZqField = require("ffjavascript").ZqField;
 
+const readWtns = require("snarkjs").wtns.exportJson;
+
 module.exports = c_tester;
 
 async function  c_tester(circomInput, _options) {
@@ -81,7 +83,7 @@ class WasmTester {
 	});
 	await exec("ls " + path.join(this.dir.path, this.baseName+"_cpp/"));
 	await exec(runc + " " + inputFile + " " + wtnsFile);
-	return readBinaryFile(wtnsFile);
+	return await readBinWitnessFile(wtnsFile);
     }
 
     async loadSymbols() {
@@ -208,18 +210,9 @@ async function compiler_above_version(v) {
     return check_versions ( compiler_version, vlist );
 }
 
-function readBinaryFile(fileName) {
-    const buff = fs.readFileSync(fileName);
-    const n32 = fromArray8ToUint(buff.slice(24,27));
-    var pos = 28+n32;
-    const ws = fromArray8ToUint(buff.slice(pos,pos+3));
-    pos += 16;
-    const w = [];
-    for (let i=0; i<ws; i++) {
-	w.push(fromArray8(buff.slice(pos,pos+n32-1)));
-	pos += n32;
-    }
-    return w;
+async function readBinWitnessFile(fileName) {
+    const buffWitness = await readWtns(fileName);
+    return buffWitness;
 }
 
 function fromArray8(arr) { //returns a BigInt
