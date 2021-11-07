@@ -15,6 +15,8 @@ const readWtns = require("snarkjs").wtns.exportJson;
 
 module.exports = c_tester;
 
+BigInt.prototype.toJSON = function() { return this.toString() }
+
 async function  c_tester(circomInput, _options) {
 
     assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
@@ -81,7 +83,7 @@ class WasmTester {
         fs.writeFile(inputFile, inputjson, function(err) {
 	    if (err) throw err;
 	});
-	await exec("ls " + path.join(this.dir.path, this.baseName+"_cpp/"));
+	await exec("cd " + path.join(this.dir.path, this.baseName+"_cpp/"));
 	await exec(runc + " " + inputFile + " " + wtnsFile);
 	return await readBinWitnessFile(wtnsFile);
     }
