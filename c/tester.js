@@ -202,7 +202,7 @@ function check_versions ( v1, v2 ) {
 }
 
 async function compiler_above_version(v) {
-    let output = await exec('circom --version').toString();
+    let output = (await exec('circom --version')).stdout;
     let compiler_version = version_to_list(output.slice(output.search(/\d/),-1));
     vlist = version_to_list(v);
     return check_versions ( compiler_version, vlist );
