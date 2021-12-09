@@ -19,11 +19,37 @@ async function  wasm_tester(circomInput, _options) {
     
     tmp.setGracefulCleanup();
 
-    const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
+    let dir;
+    let needToRecompile = true;
+    let outputOptions = Object.assign({}, _options?.outputOptions);
+    const baseName = path.basename(circomInput, ".circom");
+
+    if (outputOptions.basePath) {
+        await fs.promises.mkdir(outputOptions.basePath, { recursive: true });
+
+        const outputPath = path.join(outputOptions.basePath, baseName);
+        let outputPathExists;
+
+        try {
+            await fs.promises.access(outputPath);
+            outputPathExists = true;
+        } catch (err) {
+            outputPathExists = false;
+        }
+
+        if (outputOptions.recompile || !outputPathExists) {
+            await fs.promises.rmdir(outputPath, { force: true, recursive: true });
+            dir = await tmp.dir({tmpdir: outputOptions.basePath, name: baseName})
+        } else {
+            dir = { path: outputPath }
+            needToRecompile = false;
+        }
+    } else {
+        dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
+    }
 
     //console.log(dir.path);
 
-    const baseName = path.basename(circomInput, ".circom");
     const options = Object.assign({}, _options);
 
     options.wasm = true;
@@ -33,7 +59,9 @@ async function  wasm_tester(circomInput, _options) {
     options.r1cs = true;
     options.output = dir.path;
 
-    await compile(circomInput, options);
+    if (needToRecompile) {
+        await compile(circomInput, options);
+    }
 
     const utils = require("./utils");
     const WitnessCalculator = require("./witness_calculator");
