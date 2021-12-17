@@ -17,39 +17,7 @@ async function  wasm_tester(circomInput, _options) {
 
     assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
     
-    tmp.setGracefulCleanup();
-
-    let dir;
-    let needToRecompile = true;
-    let outputOptions = Object.assign({}, _options?.outputOptions);
     const baseName = path.basename(circomInput, ".circom");
-
-    if (outputOptions.basePath) {
-        await fs.promises.mkdir(outputOptions.basePath, { recursive: true });
-
-        const outputPath = path.join(outputOptions.basePath, baseName);
-        let outputPathExists;
-
-        try {
-            await fs.promises.access(outputPath);
-            outputPathExists = true;
-        } catch (err) {
-            outputPathExists = false;
-        }
-
-        if (outputOptions.recompile || !outputPathExists) {
-            await fs.promises.rmdir(outputPath, { force: true, recursive: true });
-            dir = await tmp.dir({tmpdir: outputOptions.basePath, name: baseName})
-        } else {
-            dir = { path: outputPath }
-            needToRecompile = false;
-        }
-    } else {
-        dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
-    }
-
-    //console.log(dir.path);
-
     const options = Object.assign({}, _options);
 
     options.wasm = true;
@@ -57,20 +25,40 @@ async function  wasm_tester(circomInput, _options) {
     options.sym = true;
     options.json = options.json || false; // costraints in json format
     options.r1cs = true;
-    options.output = dir.path;
+    options.compile = (typeof options.recompile  === 'undefined')? true : options.recompile; // by default compile
 
-    if (needToRecompile) {
-        await compile(circomInput, options);
+    if (typeof options.output  === 'undefined') {
+	tmp.setGracefulCleanup();
+        const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
+	//console.log(dir.path);
+	options.output = dir.path;
+    } else {
+	try {
+            await fs.promises.access(options.output);
+	} catch (err) {
+	    assert(options.compile,"Cannot set recompile to false if the output path does not exist");
+	    await fs.promises.mkdir(options.output, { recursive: true });
+	}
     }
-
+    if (options.compile) {
+	await compile(circomInput, options);
+    } else {
+	const jsPath = path.join(options.output, baseName+"_js");
+	try {
+	    await fs.promises.access(jsPath);
+	} catch (err) {
+	    assert(false,"Cannot set recompile to false if the "+jsPath+" folder does not exist");
+	}
+    }
+   
     const utils = require("./utils");
     const WitnessCalculator = require("./witness_calculator");
 
-    const wasm = await fs.promises.readFile(path.join(dir.path, baseName+"_js/"+ baseName + ".wasm"));
+    const wasm = await fs.promises.readFile(path.join(options.output, baseName+"_js/"+ baseName + ".wasm"));
 
     const wc = await WitnessCalculator(wasm);
 
-    return new WasmTester(dir, baseName, wc);
+    return new WasmTester(options.output, baseName, wc);
 }
 
 async function compile (fileName, options) {    
@@ -107,7 +95,7 @@ class WasmTester {
         if (this.symbols) return;
         this.symbols = {};
         const symsStr = await fs.promises.readFile(
-            path.join(this.dir.path, this.baseName + ".sym"),
+            path.join(this.dir, this.baseName + ".sym"),
             "utf8"
         );
         const lines = symsStr.split("\n");
@@ -125,7 +113,7 @@ class WasmTester {
     async loadConstraints() {
         const self = this;
         if (this.constraints) return;
-        const r1cs = await loadR1cs(path.join(this.dir.path, this.baseName + ".r1cs"),true, false);
+        const r1cs = await loadR1cs(path.join(this.dir, this.baseName + ".r1cs"),true, false);
         self.F = new ZqField(r1cs.prime);
         self.nVars = r1cs.nVars;
         self.constraints = r1cs.constraints;
@@ -226,4 +214,3 @@ async function compiler_above_version(v) {
     vlist = version_to_list(v);
     return check_versions ( compiler_version, vlist );
 }
-
