@@ -21,27 +21,40 @@ async function  c_tester(circomInput, _options) {
 
     assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
     
-    tmp.setGracefulCleanup();
-
-    const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
-
-    // console.log(dir.path);
-
     const baseName = path.basename(circomInput, ".circom");
     const options = Object.assign({}, _options);
 
-    options.wasm = true;
+    options.c = true;
 
     options.sym = true;
     options.json = options.json || false; // costraints in json format
-    //options.r1cs = options.r1cs || false; // costraints in r1cs format
-    //if (!options.json) options.r1cs = true; // r1cs if not json
     options.r1cs = true;
-    options.output = dir.path;
+    options.compile = (typeof options.recompile  === 'undefined')? true : options.recompile; // by default compile
 
-    await compile(baseName, circomInput, options);
-
-    return new WasmTester(dir, baseName, run);
+    if (typeof options.output  === 'undefined') {
+	tmp.setGracefulCleanup();
+        const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true });
+	//console.log(dir.path);
+	options.output = dir.path;
+    } else {
+	try {
+            await fs.promises.access(options.output);
+	} catch (err) {
+	    assert(options.compile,"Cannot set recompile to false if the output path does not exist");
+	    await fs.promises.mkdir(options.output, { recursive: true });
+	}
+    }
+    if (options.compile) {
+	await compile(baseName, circomInput, options);
+    } else {
+	const jsPath = path.join(options.output, baseName+"_js");
+	try {
+	    await fs.promises.access(jsPath);
+	} catch (err) {
+	    assert(false,"Cannot set recompile to false if the "+jsPath+" folder does not exist");
+	}
+    }
+    return new CTester(options.output, baseName, run);
 }
 
 async function compile (baseName, fileName, options) {    
@@ -63,7 +76,7 @@ async function compile (baseName, fileName, options) {
 	   "error building the executable C program\n" + b.stderr);
 }
     
-class WasmTester {
+class CTester {
 
     constructor(dir, baseName, witnessCalculator) {
         this.dir=dir;
@@ -77,13 +90,13 @@ class WasmTester {
 
     async calculateWitness(input) {
 	const inputjson = JSON.stringify(input);
-	const inputFile = path.join(this.dir.path, this.baseName+"_cpp/" + this.baseName + ".json");
-	const wtnsFile = path.join(this.dir.path, this.baseName+"_cpp/" + this.baseName + ".wtns");
-	const runc = path.join(this.dir.path, this.baseName+"_cpp/" + this.baseName);	
+	const inputFile = path.join(this.dir, this.baseName+"_cpp/" + this.baseName + ".json");
+	const wtnsFile = path.join(this.dir, this.baseName+"_cpp/" + this.baseName + ".wtns");
+	const runc = path.join(this.dir, this.baseName+"_cpp/" + this.baseName);	
         fs.writeFile(inputFile, inputjson, function(err) {
 	    if (err) throw err;
 	});
-	await exec("cd " + path.join(this.dir.path, this.baseName+"_cpp/"));
+	await exec("cd " + path.join(this.dir, this.baseName+"_cpp/"));
 	await exec(runc + " " + inputFile + " " + wtnsFile);
 	return await readBinWitnessFile(wtnsFile);
     }
@@ -92,7 +105,7 @@ class WasmTester {
         if (this.symbols) return;
         this.symbols = {};
         const symsStr = await fs.promises.readFile(
-            path.join(this.dir.path, this.baseName + ".sym"),
+            path.join(this.dir, this.baseName + ".sym"),
             "utf8"
         );
         const lines = symsStr.split("\n");
@@ -110,7 +123,7 @@ class WasmTester {
     async loadConstraints() {
         const self = this;
         if (this.constraints) return;
-        const r1cs = await loadR1cs(path.join(this.dir.path, this.baseName + ".r1cs"),true, false);
+        const r1cs = await loadR1cs(path.join(this.dir, this.baseName + ".r1cs"),true, false);
         self.F = new ZqField(r1cs.prime);
         self.nVars = r1cs.nVars;
         self.constraints = r1cs.constraints;
