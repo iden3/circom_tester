@@ -6,6 +6,7 @@ var tmp = require("tmp-promise");
 const path = require("path");
 
 const util = require("util");
+const utils = require("./utils");
 const exec = util.promisify(require("child_process").exec);
 
 const loadR1cs = require("r1csfile").load;
