@@ -4,6 +4,7 @@ module.exports.fnvHash = fnvHash;
 module.exports.toArray32 = toArray32;
 module.exports.fromArray32 = fromArray32;
 module.exports.flatArray = flatArray;
+module.exports.isDefined = isDefined;
 
 function toArray32(s,size) {
     const res = []; //new Uint32Array(size); //has no unshift
