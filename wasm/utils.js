@@ -51,3 +51,7 @@ function flatArray(a) {
 function fnvHash(str) {
     return fnv.hash(str, 64).hex();
 }
+
+function isDefined(v) {
+    return ((typeof(v) != "undefined")&&(v !== null));
+}
