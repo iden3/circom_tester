@@ -16,7 +16,7 @@ module.exports = wasm_tester;
 async function  wasm_tester(circomInput, _options) {
 
     assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
-    
+
     const baseName = path.basename(circomInput, ".circom");
     const options = Object.assign({}, _options);
 
@@ -50,7 +50,7 @@ async function  wasm_tester(circomInput, _options) {
 	    assert(false,"Cannot set recompile to false if the "+jsPath+" folder does not exist");
 	}
     }
-   
+
     const utils = require("./utils");
     const WitnessCalculator = require("./witness_calculator");
 
@@ -61,12 +61,13 @@ async function  wasm_tester(circomInput, _options) {
     return new WasmTester(options.output, baseName, wc);
 }
 
-async function compile (fileName, options) {    
+async function compile (fileName, options) {
     var flags = "--wasm ";
     if (options.sym) flags += "--sym ";
     if (options.r1cs) flags += "--r1cs ";
     if (options.json) flags += "--json ";
     if (options.output) flags += "--output " + options.output + " ";
+    if (options.prime) flags += "--prime " + options.prime + " ";
     if (options.O === 0) flags += "--O0 "
     if (options.O === 1) flags += "--O1 "
 
@@ -74,7 +75,7 @@ async function compile (fileName, options) {
     assert(b.stderr == "",
 	  "circom compiler error \n" + b.stderr);
 }
-    
+
 class WasmTester {
 
     constructor(dir, baseName, witnessCalculator) {
@@ -170,7 +171,7 @@ class WasmTester {
         }
 
         function checkConstraint(constraint) {
-	    
+
             const F = self.F;
             const a = evalLC(constraint[0]);
             const b = evalLC(constraint[1]);
