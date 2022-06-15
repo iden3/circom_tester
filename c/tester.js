@@ -8,7 +8,7 @@ const path = require("path");
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 
-const loadR1cs = require("r1csfile").load;
+const readR1cs = require("r1csfile").readR1cs;
 const ZqField = require("ffjavascript").ZqField;
 
 const readWtns = require("snarkjs").wtns.exportJson;
@@ -20,7 +20,7 @@ BigInt.prototype.toJSON = function() { return this.toString() }
 async function  c_tester(circomInput, _options) {
 
     assert(await compiler_above_version("2.0.0"),"Wrong compiler version. Must be at least 2.0.0");
-    
+
     const baseName = path.basename(circomInput, ".circom");
     const options = Object.assign({}, _options);
 
@@ -57,7 +57,7 @@ async function  c_tester(circomInput, _options) {
     return new CTester(options.output, baseName, run);
 }
 
-async function compile (baseName, fileName, options) {    
+async function compile (baseName, fileName, options) {
     var flags = "--c ";
     if (options.sym) flags += "--sym ";
     if (options.r1cs) flags += "--r1cs ";
@@ -66,16 +66,16 @@ async function compile (baseName, fileName, options) {
     if (options.O === 0) flags += "--O0 "
     if (options.O === 1) flags += "--O1 "
 
-    b = await exec("circom " + flags + fileName); 
+    b = await exec("circom " + flags + fileName);
     assert(b.stderr == "",
 	   "circom compiler error \n" + b.stderr);
-    
+
     const c_folder = path.join(options.output, baseName+"_cpp/")
     b = await exec("make -C "+c_folder);
     assert(b.stderr == "",
 	   "error building the executable C program\n" + b.stderr);
 }
-    
+
 class CTester {
 
     constructor(dir, baseName, witnessCalculator) {
@@ -92,7 +92,7 @@ class CTester {
 	const inputjson = JSON.stringify(input);
 	const inputFile = path.join(this.dir, this.baseName+"_cpp/" + this.baseName + ".json");
 	const wtnsFile = path.join(this.dir, this.baseName+"_cpp/" + this.baseName + ".wtns");
-	const runc = path.join(this.dir, this.baseName+"_cpp/" + this.baseName);	
+	const runc = path.join(this.dir, this.baseName+"_cpp/" + this.baseName);
         fs.writeFile(inputFile, inputjson, function(err) {
 	    if (err) throw err;
 	});
@@ -123,8 +123,12 @@ class CTester {
     async loadConstraints() {
         const self = this;
         if (this.constraints) return;
-        const r1cs = await loadR1cs(path.join(this.dir, this.baseName + ".r1cs"),true, false);
-        self.F = new ZqField(r1cs.prime);
+        const r1cs = await readR1cs(path.join(this.dir, this.baseName + ".r1cs"),{
+            loadConstraints: true,
+            loadMap: false,
+            getFieldFromPrime: (p, singlethread) => new F1Field(p)
+        });
+        self.F = r1cs.F;
         self.nVars = r1cs.nVars;
         self.constraints = r1cs.constraints;
     }
@@ -180,7 +184,7 @@ class CTester {
         }
 
         function checkConstraint(constraint) {
-	    
+
             const F = self.F;
             const a = evalLC(constraint[0]);
             const b = evalLC(constraint[1]);
@@ -194,7 +198,7 @@ class CTester {
             for (let w in lc) {
                 v = F.add(
                     v,
-                    F.mul( lc[w], witness[w] )
+                    F.mul( lc[w], F.e(witness[w]) )
                 );
             }
             return v;

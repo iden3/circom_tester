@@ -6,9 +6,10 @@ var tmp = require("tmp-promise");
 const path = require("path");
 
 const util = require("util");
+const { F1Field } = require("ffjavascript");
 const exec = util.promisify(require("child_process").exec);
 
-const loadR1cs = require("r1csfile").load;
+const readR1cs = require("r1csfile").readR1cs;
 const ZqField = require("ffjavascript").ZqField;
 
 module.exports = wasm_tester;
@@ -114,8 +115,12 @@ class WasmTester {
     async loadConstraints() {
         const self = this;
         if (this.constraints) return;
-        const r1cs = await loadR1cs(path.join(this.dir, this.baseName + ".r1cs"),true, false);
-        self.F = new ZqField(r1cs.prime);
+        const r1cs = await readR1cs(path.join(this.dir, this.baseName + ".r1cs"),{
+            loadConstraints: true,
+            loadMap: false,
+            getFieldFromPrime: (p, singlethread) => new F1Field(p)
+        });
+        self.F = r1cs.F;
         self.nVars = r1cs.nVars;
         self.constraints = r1cs.constraints;
     }
@@ -185,7 +190,7 @@ class WasmTester {
             for (let w in lc) {
                 v = F.add(
                     v,
-                    F.mul( lc[w], witness[w] )
+                    F.mul( lc[w], F.e(witness[w]) )
                 );
             }
             return v;
