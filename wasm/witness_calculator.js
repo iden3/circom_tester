@@ -15,31 +15,37 @@ module.exports = async function builder(code, options) {
 
     let wc;
 
+    let errStr = "";
     
     const instance = await WebAssembly.instantiate(wasmModule, {
         runtime: {
             exceptionHandler : function(code) {
-                let errStr;
+		let err;
                 if (code == 1) {
-                    errStr= "Signal not found. ";
+                    err = "Signal not found.\n";
                 } else if (code == 2) {
-                    errStr= "Too many signals set. ";
+                    err = "Too many signals set.\n";
                 } else if (code == 3) {
-                    errStr= "Signal already set. ";
+                    err = "Signal already set.\n";
 		} else if (code == 4) {
-                    errStr= "Assert Failed. ";
+                    err = "Assert Failed.\n";
 		} else if (code == 5) {
-                    errStr= "Not enough memory. ";
+                    err = "Not enough memory.\n";
 		} else if (code == 6) {
-                    errStr= "Input signal array access exceeds the size";
+                    err = "Input signal array access exceeds the size.\n";
 		} else {
-		    errStr= "Unknown error\n";
+		    err = "Unknown error.\n";
                 }
-		// get error message from wasm
-		errStr += getMessage();
-                throw new Error(errStr);
+                throw new Error(err + errStr);
             },
-	    showSharedRWMemory: function() {
+	    printErrorMessage : function() {
+		errStr += getMessage() + "\n";
+                // console.error(getMessage());
+	    },
+	    writeBufferMessage : function() {
+                process.stdout.write(getMessage());
+	    },
+	    showSharedRWMemory : function() {
 		printSharedRWMemory ();
             }
 
@@ -77,7 +83,9 @@ module.exports = async function builder(code, options) {
 	for (let j=0; j<shared_rw_memory_size; j++) {
 	    arr[shared_rw_memory_size-1-j] = instance.exports.readSharedRWMemory(j);
 	}
-	console.log(utils.fromArray32(arr));
+
+	process.stdout.write(fromArray32(arr).toString());
+	//console.log(fromArray32(arr));
     }
 
 };
@@ -90,7 +98,7 @@ class WitnessCalculator {
         this.n32 = this.instance.exports.getFieldNumLen32();
 
         this.instance.exports.getRawPrime();
-        const arr = new Array(this.n32);
+        const arr = new Uint32Array(this.n32);
         for (let i=0; i<this.n32; i++) {
             arr[this.n32-1-i] = this.instance.exports.readSharedRWMemory(i);
         }
@@ -115,8 +123,18 @@ class WitnessCalculator {
             const hMSB = parseInt(h.slice(0,8), 16);
             const hLSB = parseInt(h.slice(8,16), 16);
             const fArr = utils.flatArray(input[k]);
+	    let signalSize = this.instance.exports.getInputSignalSize(hMSB, hLSB);
+	    if (signalSize < 0){
+		throw new Error(`Signal ${k} not found\n`);
+	    }
+	    if (fArr.length < signalSize) {
+		throw new Error(`Not enough values for input signal ${k}\n`);
+	    }
+	    if (fArr.length > signalSize) {
+		throw new Error(`Too many values for input signal ${k}\n`);
+	    }
             for (let i=0; i<fArr.length; i++) {
-		const arrFr = utils.toArray32(fArr[i],this.n32)
+		const arrFr = utils.toArray32(BigInt(fArr[i])%this.prime,this.n32)
 		for (let j=0; j<this.n32; j++) {
 		    this.instance.exports.writeSharedRWMemory(j,arrFr[this.n32-1-j]);
 		}

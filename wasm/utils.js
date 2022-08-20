@@ -5,9 +5,8 @@ module.exports.toArray32 = toArray32;
 module.exports.fromArray32 = fromArray32;
 module.exports.flatArray = flatArray;
 
-function toArray32(s,size) {
+function toArray32(rem,size) {
     const res = []; //new Uint32Array(size); //has no unshift
-    let rem = BigInt(s);
     const radix = BigInt(0x100000000);
     while (rem) {
         res.unshift( Number(rem % radix));
