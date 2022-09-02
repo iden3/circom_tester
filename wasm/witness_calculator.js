@@ -17,7 +17,7 @@ module.exports = async function builder(code, options) {
 
     let errStr = "";
     let msgStr = "";
-    
+
     const instance = await WebAssembly.instantiate(wasmModule, {
         runtime: {
             exceptionHandler : function(code) {
@@ -76,7 +76,7 @@ module.exports = async function builder(code, options) {
 //            options.logFinishComponent
 //        );
 
-    
+
     wc = new WitnessCalculator(instance, sanityCheck);
     return wc;
 
@@ -89,7 +89,7 @@ module.exports = async function builder(code, options) {
 	}
         return message;
     }
-	
+
     function printSharedRWMemory () {
 	const shared_rw_memory_size = instance.exports.getFieldNumLen32();
 	const arr = new Uint32Array(shared_rw_memory_size);
@@ -102,7 +102,7 @@ module.exports = async function builder(code, options) {
 		msgStr += " "
 	}
 	// Then append the value to the message we are creating
-	msgStr += (fromArray32(arr).toString());
+	msgStr += (utils.fromArray32(arr).toString());
 	}
 
 };
@@ -125,7 +125,7 @@ class WitnessCalculator {
 
         this.sanityCheck = sanityCheck;
     }
-    
+
     circom_version() {
 	return this.instance.exports.getVersion();
     }
@@ -187,7 +187,7 @@ class WitnessCalculator {
 
         return w;
     }
-    
+
 
     async calculateBinWitness(input, sanityCheck) {
 
@@ -205,14 +205,14 @@ class WitnessCalculator {
 
 	return buff;
     }
-    
+
 
     async calculateWTNSBin(input, sanityCheck) {
 
         const buff32 = new Uint32Array(this.witnessSize*this.n32+this.n32+11);
 	const buff = new  Uint8Array( buff32.buffer);
         await this._doCalculateWitness(input, sanityCheck);
-  
+
 	//"wtns"
 	buff[0] = "w".charCodeAt(0)
 	buff[1] = "t".charCodeAt(0)
