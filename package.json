@@ -30,6 +30,6 @@
     "r1csfile": "0.0.37",
     "tmp-promise": "^3.0.2",
     "util": "^0.12.4",
-    "snarkjs": "0.4.10"
+    "snarkjs": "0.4.26"
   }
 }
