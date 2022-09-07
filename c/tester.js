@@ -59,6 +59,15 @@ async function  c_tester(circomInput, _options) {
 
 async function compile (baseName, fileName, options) {
     var flags = "--c ";
+    if (options.include) {
+        if (Array.isArray(options.include)) {
+            for (let i=0; i<options.include.length;i++) {
+                flags += "-l "+options.include[i] + " ";
+            }
+        } else {
+            flags += "-l "+options.include+ " ";
+        }
+    }
     if (options.sym) flags += "--sym ";
     if (options.r1cs) flags += "--r1cs ";
     if (options.json) flags += "--json ";

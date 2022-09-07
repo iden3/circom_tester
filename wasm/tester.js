@@ -64,6 +64,15 @@ async function  wasm_tester(circomInput, _options) {
 
 async function compile (fileName, options) {
     var flags = "--wasm ";
+    if (options.include) {
+        if (Array.isArray(options.include)) {
+            for (let i=0; i<options.include.length;i++) {
+                flags += "-l "+options.include[i] + " ";
+            }
+        } else {
+            flags += "-l "+options.include + " ";
+        }
+    }
     if (options.sym) flags += "--sym ";
     if (options.r1cs) flags += "--r1cs ";
     if (options.json) flags += "--json ";
@@ -73,6 +82,7 @@ async function compile (fileName, options) {
     if (options.O === 1) flags += "--O1 ";
     if (options.verbose) flags += "--verbose ";
 
+    console.log(flags);
     b = await exec("circom " + flags + fileName);
     if (options.verbose) {
         console.log(b.stdout);
