@@ -76,7 +76,7 @@ async function compile (baseName, fileName, options) {
     if (options.O === 1) flags += "--O1 ";
     if (options.verbose) flags += "--verbose ";
 
-    b = await exec("circom " + flags + fileName);
+    let b = await exec("circom " + flags + fileName);
     if (options.verbose) {
         console.log(b.stdout);
     }
@@ -238,7 +238,7 @@ function check_versions ( v1, v2 ) {
 async function compiler_above_version(v) {
     let output = (await exec('circom --version')).stdout;
     let compiler_version = version_to_list(output.slice(output.search(/\d/),-1));
-    vlist = version_to_list(v);
+    let vlist = version_to_list(v);
     return check_versions ( compiler_version, vlist );
 }
 
