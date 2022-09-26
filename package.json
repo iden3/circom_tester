@@ -1,6 +1,6 @@
 {
   "name": "circom_tester",
-  "version": "0.0.14",
+  "version": "0.0.18",
   "description": "Tools for testing circom circuits.",
   "main": "index.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "r1csfile": "^0.0.39",
     "tmp-promise": "^3.0.3",
     "util": "^0.12.4",
-    "snarkjs": "^0.4.22"
+    "snarkjs": "0.4.26"
   },
   "devDependencies": {
     "@types/chai": "^4.3.1",
