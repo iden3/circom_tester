@@ -22,7 +22,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y wget nlohmann-json3-dev libgmp-dev nasm g++ build-essential
 
       - name: Setup Circom
-        run: wget https://github.com/iden3/circom/releases/download/v2.0.5/circom-linux-amd64 && sudo mv ./circom-linux-amd64 /usr/bin/circom && sudo chmod +x /usr/bin/circom
+        run: wget https://github.com/iden3/circom/releases/latest/download/circom-linux-amd64 && sudo mv ./circom-linux-amd64 /usr/bin/circom && sudo chmod +x /usr/bin/circom
 
       - run: npm ci
 
