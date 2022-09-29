@@ -81,7 +81,7 @@ describe("Simple test", function () {
         }
     });
 
-    it("Checking the compilation of a simple circuit generating wasm in a given folder without recompiling", async function () {
+    it("Checking the compilation of a simple circuit generating C in a given folder without recompiling", async function () {
         const circuit = await c_tester(
 	    path.join(__dirname, "Multiplier2.circom"),
 	    { output : path.join(__dirname),
