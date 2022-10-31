@@ -82,12 +82,15 @@ async function compile (fileName, options) {
     if (options.O === 1) flags += "--O1 ";
     if (options.verbose) flags += "--verbose ";
 
-    b = await exec("circom " + flags + fileName);
-    if (options.verbose) {
-        console.log(b.stdout);
+    try {
+	b = await exec("circom " + flags + fileName);
+	if (options.verbose) {
+            console.log(b.stdout);
+	}
+    } catch (e) {
+	assert(false,
+	       "circom compiler error \n" + e);
     }
-    assert(b.stderr == "",
-	  "circom compiler error \n" + b.stderr);
 }
 
 class WasmTester {
