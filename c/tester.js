@@ -6,6 +6,7 @@ var tmp = require("tmp-promise");
 const path = require("path");
 
 const util = require("util");
+const { F1Field } = require("ffjavascript");
 const exec = util.promisify(require("child_process").exec);
 
 const readR1cs = require("r1csfile").readR1cs;
@@ -110,7 +111,10 @@ class CTester {
 	    if (err) throw err;
 	});
 	await exec("cd " + path.join(this.dir, this.baseName+"_cpp/"));
-	await exec(runc + " " + inputFile + " " + wtnsFile);
+        let proc = await exec(runc + " " + inputFile + " " + wtnsFile);
+        if (proc.stdout !== "") {
+            console.log(proc.stdout);
+        }
 	return await readBinWitnessFile(wtnsFile);
     }
 
