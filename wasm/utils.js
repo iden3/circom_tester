@@ -4,6 +4,7 @@ module.exports.fnvHash = fnvHash;
 module.exports.toArray32 = toArray32;
 module.exports.fromArray32 = fromArray32;
 module.exports.flatArray = flatArray;
+module.exports.normalize = normalize;
 
 function toArray32(rem,size) {
     const res = []; //new Uint32Array(size); //has no unshift
@@ -45,6 +46,12 @@ function flatArray(a) {
             res.push(a);
         }
     }
+}
+
+function normalize(n, prime) {
+    let res = BigInt(n) % prime
+    if (res < 0) res += prime
+    return res
 }
 
 function fnvHash(str) {

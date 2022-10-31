@@ -151,7 +151,7 @@ class WitnessCalculator {
 		throw new Error(`Too many values for input signal ${k}\n`);
 	    }
             for (let i=0; i<fArr.length; i++) {
-		const arrFr = utils.toArray32(BigInt(fArr[i])%this.prime,this.n32)
+		const arrFr = utils.toArray32(utils.normalize(fArr[i],this.prime),this.n32)
 		for (let j=0; j<this.n32; j++) {
 		    this.instance.exports.writeSharedRWMemory(j,arrFr[this.n32-1-j]);
 		}
