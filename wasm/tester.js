@@ -174,7 +174,7 @@ class WasmTester {
         if (!self.symbols) await self.loadSymbols();
         for (let n in self.symbols) {
             let v;
-            if (utils.isDefined(witness[self.symbols[n].varIdx])) {
+            if (isDefined(witness[self.symbols[n].varIdx])) {
                 v = witness[self.symbols[n].varIdx].toString();
             } else {
                 v = "undefined";
@@ -235,4 +235,8 @@ async function compiler_above_version(v) {
     let compiler_version = version_to_list(output.slice(output.search(/\d/),-1));
     vlist = version_to_list(v);
     return check_versions ( compiler_version, vlist );
+}
+
+function isDefined(v) {
+    return ((typeof(v) != "undefined")&&(v !== null));
 }
