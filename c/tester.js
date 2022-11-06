@@ -186,7 +186,7 @@ class CTester {
         if (!self.symbols) await self.loadSymbols();
         for (let n in self.symbols) {
             let v;
-            if (utils.isDefined(witness[self.symbols[n].varIdx])) {
+            if (isDefined(witness[self.symbols[n].varIdx])) {
                 v = witness[self.symbols[n].varIdx].toString();
             } else {
                 v = "undefined";
@@ -270,4 +270,8 @@ function fromArray8ToUint(arr) { //returns a BigInt
         res = res*radix + arr[i];
     }
     return res;
+}
+
+function isDefined(v) {
+    return ((typeof(v) != "undefined")&&(v !== null));
 }
