@@ -2,8 +2,9 @@
 ## Setup
 1. Create new node js project.
 2. Install the `circom_tester` packge.
+3. Follow the Running a test section to understand how to interact with the circom_tester.
 
-## Example usage
+## Running a test
 
 A simple demonstration of reading the circuit and inputs files, then calculating the witness, checking the constraints and asserting the output of the program.
 
