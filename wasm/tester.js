@@ -2,6 +2,7 @@ const chai = require("chai");
 const assert = chai.assert;
 
 const fs = require("fs");
+const readline = require('readline')
 var tmp = require("tmp-promise");
 const path = require("path");
 
@@ -213,6 +214,35 @@ class WasmTester {
         }
     }
 
+    async searchSymbols(regex) {
+        return new Promise((resolve, reject) => {
+            const filePath = path.join(this.dir, this.baseName + ".sym");
+
+            const rl = readline.createInterface({
+                input: fs.createReadStream(filePath),
+                crlfDelay: Infinity
+            });
+    
+            const matches = [];
+            rl.on('line', (line) => {
+                if (regex.test(line)) {
+                    matches.push(line);
+                }
+            });
+    
+            rl.on('close', () => {
+                resolve(matches);
+            });
+        });
+    }
+
+    async getJSONOutput(signalName, witness) {
+        //create regex using signalName
+        const regex = new RegExp(`\.${signalName}[\[|\.]`)
+        const symbols = await this.searchSymbols(regex);
+        return createObject(symbols, witness);
+    }
+
 }
 
 function version_to_list ( v ) {
@@ -235,4 +265,72 @@ async function compiler_above_version(v) {
     let compiler_version = version_to_list(output.slice(output.search(/\d/),-1));
     vlist = version_to_list(v);
     return check_versions ( compiler_version, vlist );
+}
+
+function splitString(input) {
+    var regex = /\b[a-zA-Z_]+|\[[\d]+\]/g;
+    return input.match(regex);
+}
+
+function createObject(symbols, values) {
+    function recursiveCreate(parts, currentObj, value) {
+        var part = parts.shift();
+        var next = parts[0];
+
+        var parentObj = currentObj;
+
+        if (part && part.charAt(0) === "[") {
+            var arrayIndex = parseInt(part.slice(1, -1));
+
+            if (next && next.charAt(0) === "[") {
+                var array = currentObj[arrayIndex] || [];
+                currentObj[arrayIndex] = array;
+                currentObj = array;
+            } else {
+                var obj = currentObj[arrayIndex] || {};
+                currentObj[arrayIndex] = obj;
+                currentObj = obj;
+            }
+        } else if (next && next.charAt(0) === "[") {
+            var key = part;
+            var array = currentObj[key] || [];
+            var arrayIndex = parseInt(next.slice(1, -1));
+
+            currentObj[key] = array;
+            currentObj = array;
+        } else {
+            var obj = currentObj[part] || {};
+
+            currentObj[part] = obj;
+            currentObj = obj;
+        }
+
+        if (!next) {
+            if (part.charAt(0) === "[") {
+                var arrayIndex = parseInt(part.slice(1, -1));
+                parentObj[arrayIndex] = value;
+            } else {
+                parentObj[part] = value;
+            }
+            currentObj = parentObj;
+        }
+
+        if (parts.length > 0) {
+            return recursiveCreate(parts, currentObj, value);
+        } else {
+            return currentObj;
+        }
+    }
+
+    var output = {};
+
+    for (var i = 0; i < symbols.length; i++) {
+        var symbol = symbols[i];
+        var [, valueIndex, , path] = symbol.split(",");
+        var parts = splitString(path);
+        var value = values[valueIndex];
+        recursiveCreate(parts, output, value);
+    }
+
+    return output;
 }

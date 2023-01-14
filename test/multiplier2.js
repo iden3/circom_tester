@@ -18,7 +18,11 @@ describe("Simple test", function () {
         const circuit = await wasm_tester(
 	    path.join(__dirname, "Multiplier2.circom")
 	);
-        const w = await circuit.calculateWitness({a: 2, b: 4});
+        const a = 2;
+        const b = 4;
+        const w = await circuit.calculateWitness({a, b});
+        const signals = await circuit.getJSONOutput('main', w);
+        assert(signals.main.c == BigInt(a * b));
         await circuit.checkConstraints(w);
     });
     
@@ -28,7 +32,11 @@ describe("Simple test", function () {
 	    { output : path.join(__dirname),
 	    }
 	);
-        const w = await circuit.calculateWitness({a: 2, b: 4});
+        const a = 2;
+        const b = 4;
+        const w = await circuit.calculateWitness({a, b});
+        const signals = await circuit.getJSONOutput('main', w);
+        assert(signals.main.c == BigInt(a * b));
         await circuit.checkConstraints(w);
     });
     
@@ -39,7 +47,12 @@ describe("Simple test", function () {
 	      recompile : false,
 	    }
 	);
-        const w = await circuit.calculateWitness({a: 6, b: 3});
+        const a = 6;
+        const b = 3;
+        const w = await circuit.calculateWitness({a, b});
+        const signals = await circuit.getJSONOutput('main', w);
+        assert(signals.main.c == BigInt(a * b));
+
         await circuit.checkConstraints(w);
 	
     });
