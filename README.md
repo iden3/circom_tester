@@ -1,46 +1,36 @@
 # circom tester
 ## Setup
 1. Create new node js project.
-2. Install the `circom_tester` packge.
-3. Follow the Running a test section to understand how to interact with the circom_tester.
+2. Install `circom_tester` and `chai` packges.
+3. Install `mocha` packge to run the tests.
 
-## Running a test
 
-A simple demonstration of reading the circuit and inputs files, then calculating the witness, checking the constraints and asserting the output of the program.
+## Creating & Running a test file
 
-index.js
-``` index.js
-const circuitFile = "circuit.circom";
-const inputsFile = "inputs.json";
+Create a js file contains the following code or use the src provided in the following section.
+<br>Execue `mocha -p -r ts-node/register 'multiplier2.js'` to run the test file.
 
-async function testCircuit() {
-    const fs = require('fs');
-    const tester = require('circom_tester').wasm;
+multiplier2.js ([src](test/multiplier2.js))
+``` multiplier2.js
+const chai = require("chai");
+const path = require("path");
+const wasm_tester = require("./../index").wasm;
+const c_tester = require("./../index").c;
 
-    // reading input file
-    let rawdata = fs.readFileSync(inputsFile);
-    let input = JSON.parse(rawdata);
-    console.log(input);
+const F1Field = require("ffjavascript").F1Field;
+const Scalar = require("ffjavascript").Scalar;
+exports.p = Scalar.fromString("21888242871839275222246405745257275088548364400416034343698204186575808495617");
+const Fr = new F1Field(exports.p);
 
-    // load and calc witness
-    const circuit = await tester(circuitFile);
-    const witness = await circuit.calculateWitness(input.inputs, true);
+const assert = chai.assert;
 
-    // check constrains and assert the ouput result of the cirucit
-    await circuit.checkConstraints(witness);
-    await circuit.assertOut(witness, input.expOut);
-  }
-  
-  function start() {
-    return testCircuit();
-  }
-  
-  // Call start
-  (async() => {
-    console.log('Testing circuit...');
-  
-    await start();
-    
-    console.log('Test pass');
-  })();
+describe("Simple test", function () {
+    this.timeout(100000);
+
+    it("Checking the compilation of a simple circuit generating wasm", async function () {
+        const circuit = await wasm_tester(path.join(__dirname, "Multiplier2circom"));
+        const w = await circuit.calculateWitness({a: 2, b: 4});
+        await circuit.checkConstraints(w);
+    });
+});
 ```
