@@ -7,7 +7,7 @@
 
 ## Creating & Running a test file
 
-Create a js file contains the following code or use the src provided in the following section.
+Create a js file contain the following code or use the src provided in the following section.
 <br>Execue `mocha -p -r ts-node/register 'multiplier2.js'` to run the test file.
 
 multiplier2.js ([src](test/multiplier2.js))
