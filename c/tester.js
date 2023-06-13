@@ -82,6 +82,11 @@ async function compile (baseName, fileName, options) {
 	if (options.verbose) {
             console.log(b.stdout);
 	}
+
+    if (b.stderr) {
+        console.error(b.stderr);
+    }
+    
     } catch (e) {
 	assert(false,
 	       "circom compiler error \n" + e);
