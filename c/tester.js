@@ -196,6 +196,29 @@ class CTester {
         return lines.join("\n");
     }
 
+    // get output out of the witness
+    async getOutput(witness) {
+        const self = this;
+        if (!self.symbols) await self.loadSymbols();
+
+        let result = [];
+        for (let i = 0; true; i++) {
+            const tmp = self.symbols[`main.out[${i}]`];
+            if (tmp === undefined) {
+                break;
+            }
+            result.push(witness[tmp.varIdx].toString());
+        }
+
+        if(result.length == 0) {
+            assert(false, "No output found");
+        } else if(result.length == 1) {
+            return result[0];
+        } else {
+            return result;
+        }
+    }
+
     async checkConstraints(witness) {
         const self = this;
         if (!self.constraints) await self.loadConstraints();
