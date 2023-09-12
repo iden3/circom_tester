@@ -63,7 +63,7 @@ async function  wasm_tester(circomInput, _options) {
 }
 
 async function compile (fileName, options) {
-    var flags = "--wasm ";
+    let flags = "--wasm ";
     if (options.include) {
         if (Array.isArray(options.include)) {
             for (let i=0; i<options.include.length;i++) {
@@ -83,10 +83,13 @@ async function compile (fileName, options) {
     if (options.verbose) flags += "--verbose ";
 
     try {
-	b = await exec("circom " + flags + fileName);
+	let b = await exec("circom " + flags + fileName);
 	if (options.verbose) {
             console.log(b.stdout);
 	}
+        if (b.stderr) {
+            console.error(b.stderr);
+        }
     } catch (e) {
 	assert(false,
 	       "circom compiler error \n" + e);

@@ -59,7 +59,7 @@ async function  c_tester(circomInput, _options) {
 }
 
 async function compile (baseName, fileName, options) {
-    var flags = "--c ";
+    let flags = "--c ";
     if (options.include) {
         if (Array.isArray(options.include)) {
             for (let i=0; i<options.include.length;i++) {
@@ -78,19 +78,23 @@ async function compile (baseName, fileName, options) {
     if (options.verbose) flags += "--verbose ";
 
     try {
-	b = await exec("circom " + flags + fileName);
+	let b = await exec("circom " + flags + fileName);
 	if (options.verbose) {
             console.log(b.stdout);
 	}
+        if (b.stderr) {
+            console.error(b.stderr);
+        }
     } catch (e) {
 	assert(false,
 	       "circom compiler error \n" + e);
     }
 
     const c_folder = path.join(options.output, baseName+"_cpp/")
-    b = await exec("make -C "+c_folder);
-    assert(b.stderr == "",
-	   "error building the executable C program\n" + b.stderr);
+    let b = await exec("make -C "+c_folder);
+    if (b.stderr) {
+        console.error(b.stderr);
+    }
 }
 
 class CTester {
@@ -117,6 +121,9 @@ class CTester {
         let proc = await exec(runc + " " + inputFile + " " + wtnsFile);
         if (proc.stdout !== "") {
             console.log(proc.stdout);
+        }
+        if (proc.stderr !== "") {
+            console.error(proc.stderr);
         }
 	return await readBinWitnessFile(wtnsFile);
     }

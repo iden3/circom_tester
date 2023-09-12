@@ -8,4 +8,3 @@ template Multiplier2() {
 }
 
 component main = Multiplier2();
- 
