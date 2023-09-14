@@ -81,6 +81,7 @@ async function compile(fileName, options) {
     if (options.O === 0) flags += "--O0 ";
     if (options.O === 1) flags += "--O1 ";
     if (options.verbose) flags += "--verbose ";
+    if (options.inspect) flags += "--inspect ";
 
     try {
         let b = await exec("circom " + flags + fileName);
