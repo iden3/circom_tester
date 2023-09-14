@@ -6,6 +6,7 @@ var tmp = require("tmp-promise");
 const path = require("path");
 
 const util = require("util");
+const { F1Field } = require("ffjavascript");
 const exec = util.promisify(require("child_process").exec);
 
 const readR1cs = require("r1csfile").readR1cs;
@@ -76,12 +77,15 @@ async function compile (baseName, fileName, options) {
     if (options.O === 1) flags += "--O1 ";
     if (options.verbose) flags += "--verbose ";
 
-    let b = await exec("circom " + flags + fileName);
-    if (options.verbose) {
-        console.log(b.stdout);
+    try {
+	      let b = await exec("circom " + flags + fileName);
+	      if (options.verbose) {
+            console.log(b.stdout);
+	      }
+    } catch (e) {
+	      assert(false,
+	             "circom compiler error \n" + e);
     }
-    assert(b.stderr == "",
-	   "circom compiler error \n" + b.stderr);
 
     const c_folder = path.join(options.output, baseName+"_cpp/")
     b = await exec("make -C "+c_folder);
@@ -110,7 +114,10 @@ class CTester {
 	    if (err) throw err;
 	});
 	await exec("cd " + path.join(this.dir, this.baseName+"_cpp/"));
-	await exec(runc + " " + inputFile + " " + wtnsFile);
+        let proc = await exec(runc + " " + inputFile + " " + wtnsFile);
+        if (proc.stdout !== "") {
+            console.log(proc.stdout);
+        }
 	return await readBinWitnessFile(wtnsFile);
     }
 
