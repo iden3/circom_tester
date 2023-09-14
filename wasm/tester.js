@@ -83,7 +83,7 @@ async function compile (fileName, options) {
     if (options.verbose) flags += "--verbose ";
 
     try {
-	let b = await exec("circom " + flags + fileName);
+        let b = await exec("circom " + flags + fileName);
 	if (options.verbose) {
             console.log(b.stdout);
 	}
@@ -91,8 +91,8 @@ async function compile (fileName, options) {
             console.error(b.stderr);
         }
     } catch (e) {
-	assert(false,
-	       "circom compiler error \n" + e);
+	      assert(false,
+	             "circom compiler error \n" + e);
     }
 }
 
