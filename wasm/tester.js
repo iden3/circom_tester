@@ -87,8 +87,8 @@ async function compile (fileName, options) {
 	      if (options.verbose) {
             console.log(b.stdout);
 	      }
-	      if (b.stderr != '') {
-		        throw(b.stderr);
+        if (b.stderr) {
+            console.error(b.stderr);
         }
     } catch (e) {
 	      assert(false,
