@@ -211,26 +211,23 @@ class WasmTester {
             for (const item of inputArray) {
                 // Check if the item matches the pattern with brackets and a number
                 const match = item.match(/^(.+)\[(\d+)\]$/);
-        
                 if (match) {
-                // If there's a match, expand the item
-                const base = match[1]; // The base string (e.g., "b" or "d")
-                const count = parseInt(match[2], 10); // The number inside the brackets
-        
-                for (let i = 0; i < count; i++) {
-                    // Check for nested brackets
-                    if (base.includes("[")) {
-                    // Call the function recursively for nested brackets
-                    const nestedResults = parse([`${base}[${i}]`]);
-                    outputArray.push(...nestedResults);
-                    } else {
-                    // Otherwise, just add the expanded items to the output array
-                    outputArray.push(`${base}[${i}]`);
+                    // If there's a match, expand the item
+                    const base = match[1]; // The base string (e.g., "b" or "d")
+                    const count = parseInt(match[2], 10); // The number inside the brackets
+                    // Range all the element in the array, then add the expanded items to the output array
+                    for (let i = 0; i < count; i++) {
+                        // Check for nested brackets
+                        if (base.includes("[")) {
+                            assert(false, "Multi-dimension array is not supported");
+                        } else {
+                            // Otherwise, just add the expanded items to the output array
+                            outputArray.push(`${base}[${i}]`);
+                        }
                     }
-                }
                 } else {
-                // If there's no match, add the item as it is a singla varialbe 
-                outputArray.push(item);
+                    // If there's no match, add the item as it is a singla varialbe 
+                    outputArray.push(item);
                 }
             }
         
