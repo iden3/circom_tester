@@ -63,3 +63,7 @@ typings/
 tmp
 
 .DS_Store
+
+package-lock.json
+
+*.r1cs 
