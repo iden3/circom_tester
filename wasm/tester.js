@@ -196,8 +196,8 @@ class WasmTester {
         for (let n of outputs_iter) {
             let v;
             // prefix n with "main."
-            n = "main." + n;
-            if (witness[self.symbols[n].varIdx] !== undefined) {
+            let tmp_n = "main." + n;
+            if (witness[self.symbols[tmp_n].varIdx] !== undefined) {
                 v = witness[self.symbols[n].varIdx].toString();
             } else {
                 assert(false, "Output variable not defined: " + n);
