@@ -206,6 +206,54 @@ class CTester {
         }
         return lines.join("\n");
     }
+    async getOutput(witness, outputs) {
+        const outputs_iter = parse(outputs); 
+        const self = this;
+        if (!self.symbols) await self.loadSymbols();
+        // new a dictionary which map [name] to [value]
+        let res = {};
+        for (let n of outputs_iter) {
+            let v;
+            // prefix n with "main."
+            let tmp_n = "main." + n;
+            if (witness[self.symbols[tmp_n].varIdx] !== undefined) {
+                v = witness[self.symbols[tmp_n].varIdx].toString();
+            } else {
+                assert(false, "Output variable not defined: " + n);
+            }
+            // add {name: value} to the dictionary
+            res[n] = v;
+        }
+        // parse "a, b[3]" to "a, b[0], b[1], b[2]"
+        function parse(inputArray) {
+            const outputArray = [];
+            for (const item of inputArray) {
+                // Check if the item matches the pattern with brackets and a number
+                const match = item.match(/^(.+)\[(\d+)\]$/);
+                if (match) {
+                    // If there's a match, expand the item
+                    const base = match[1]; // The base string (e.g., "b" or "d")
+                    const count = parseInt(match[2], 10); // The number inside the brackets
+                    // Range all the element in the array, then add the expanded items to the output array
+                    for (let i = 0; i < count; i++) {
+                        // Check for nested brackets
+                        if (base.includes("[")) {
+                            assert(false, "Multi-dimension array is not supported");
+                        } else {
+                            // Otherwise, just add the expanded items to the output array
+                            outputArray.push(`${base}[${i}]`);
+                        }
+                    }
+                } else {
+                    // If there's no match, add the item as it is a singla varialbe 
+                    outputArray.push(item);
+                }
+            }
+        
+            return outputArray;
+        }
+        return res; 
+      }
 
     async checkConstraints(witness) {
         const self = this;
