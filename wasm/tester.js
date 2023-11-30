@@ -7,6 +7,7 @@ const path = require("path");
 
 const util = require("util");
 const {F1Field} = require("ffjavascript");
+const { c } = require("..");
 const exec = util.promisify(require("child_process").exec);
 
 const readR1cs = require("r1csfile").readR1cs;
@@ -188,7 +189,7 @@ class WasmTester {
         return lines.join("\n");
     }
     async getOutput(witness, outputs) {
-        const outputs_iter = parse(outputs)
+        const outputs_iter = parse(outputs); 
         const self = this;
         if (!self.symbols) await self.loadSymbols();
         // new a dictionary which map [name] to [value]
@@ -198,7 +199,7 @@ class WasmTester {
             // prefix n with "main."
             let tmp_n = "main." + n;
             if (witness[self.symbols[tmp_n].varIdx] !== undefined) {
-                v = witness[self.symbols[n].varIdx].toString();
+                v = witness[self.symbols[tmp_n].varIdx].toString();
             } else {
                 assert(false, "Output variable not defined: " + n);
             }
