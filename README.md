@@ -28,7 +28,7 @@ describe("Simple test", function () {
     this.timeout(100000);
 
     it("Checking the compilation of a simple circuit generating wasm", async function () {
-        const circuit = await wasm_tester(path.join(__dirname, "Multiplier2circom"));
+        const circuit = await wasm_tester(path.join(__dirname, "Multiplier2.circom"));
         const w = await circuit.calculateWitness({a: 2, b: 4});
         await circuit.checkConstraints(w);
     });
