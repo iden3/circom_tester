@@ -4,6 +4,7 @@ const assert = chai.assert;
 const fs = require("fs");
 const tmp = require("tmp-promise");
 const path = require("path");
+const readline = require("readline");
 
 const util = require("util");
 const {F1Field} = require("ffjavascript");
@@ -116,21 +117,24 @@ class WasmTester {
     async loadSymbols() {
         if (this.symbols) return;
         this.symbols = {};
-        const symsStr = await fs.promises.readFile(
-            path.join(this.dir, this.baseName + ".sym"),
-            "utf8"
-        );
-        const lines = symsStr.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            const arr = lines[i].split(",");
-            if (arr.length != 4) continue;
-            this.symbols[arr[3]] = {
-                labelIdx: Number(arr[0]),
-                varIdx: Number(arr[1]),
-                componentIdx: Number(arr[2]),
-            };
+    
+        const fileStream = fs.createReadStream(path.join(this.dir, this.baseName + ".sym"), { encoding: "utf8" });
+    
+        const rl = readline.createInterface({
+          input: fileStream,
+          crlfDelay: Infinity
+        });
+    
+        for await (const line of rl) {
+          const arr = line.split(",");
+          if (arr.length != 4) continue;
+          this.symbols[arr[3]] = {
+            labelIdx: Number(arr[0]),
+            varIdx: Number(arr[1]),
+            componentIdx: Number(arr[2])
+          };
         }
-    }
+    }   
 
     async loadConstraints() {
         const self = this;
