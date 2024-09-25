@@ -178,7 +178,7 @@ class WasmTester {
         if (!self.symbols) await self.loadSymbols();
         for (let n in self.symbols) {
             let v;
-            if (utils.isDefined(witness[self.symbols[n].varIdx])) {
+            if (witness[self.symbols[n].varIdx] !== undefined) {
                 v = witness[self.symbols[n].varIdx].toString();
             } else {
                 v = "undefined";
