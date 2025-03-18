@@ -178,7 +178,7 @@ class WasmTester {
         if (!self.symbols) await self.loadSymbols();
         for (let n in self.symbols) {
             let v;
-            if (utils.isDefined(witness[self.symbols[n].varIdx])) {
+            if (witness[self.symbols[n].varIdx] !== undefined) {
                 v = witness[self.symbols[n].varIdx].toString();
             } else {
                 v = "undefined";
@@ -186,6 +186,49 @@ class WasmTester {
             lines.push(`${n} --> ${v}`);
         }
         return lines.join("\n");
+    }
+
+    async getOutput(witness, output) {
+        const self = this;
+        if (!self.symbols) await self.loadSymbols();
+
+        return get_by_prefix("main", output);
+
+        function get_by_prefix(prefix, out) {
+            if (typeof out !== "object" || out.constructor.name !== "Object") {
+                throw new Error("Invalid output format");
+            }
+
+            let result = {};
+            for (const [k, v] of Object.entries(out)) {
+                if (typeof v != "number" || v <= 0) {
+                    throw new Error(`Invalid output format: ${k} ${v}`);
+                }
+
+                const prefix_k = `${prefix}.${k}`;
+                if (v == 1) {
+                    if (typeof self.symbols[prefix_k] == "undefined") {
+                        assert(false, `Output variable not defined: ${prefix_k}`);
+                    }
+
+                    result[k] = witness[self.symbols[prefix_k].varIdx];
+                } else {
+                    let result_i = [];
+                    for (let i = 0; i < v; i++) {
+                        const name = `${prefix_k}[${i}]`;
+                        if (typeof self.symbols[name] == "undefined") {
+                            assert(false, `Output variable not defined: ${name}`);
+                        }
+
+                        result_i.push(witness[self.symbols[name].varIdx]);
+                    }
+
+                    result[k] = result_i;
+                }
+            }
+
+            return result;
+        }
     }
 
     async checkConstraints(witness) {
