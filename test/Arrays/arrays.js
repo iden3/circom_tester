@@ -1,7 +1,7 @@
 const chai = require("chai");
 const path = require("path");
-const wasm_tester = require("./../index").wasm;
-const c_tester = require("./../index").c;
+const wasm_tester = require("./../../index").wasm;
+const c_tester = require("./../../index").c;
 
 const F1Field = require("ffjavascript").F1Field;
 const Scalar = require("ffjavascript").Scalar;
@@ -10,48 +10,56 @@ const Fr = new F1Field(exports.p);
 
 const assert = chai.assert;
 
-describe("Simple test", function () {
+const testInput = {
+    a: [["1", "2"], ["3", "4"]],
+    commitment: "3330844108758711782672220159612173083623710937399719017074673646455206473965"
+};
+
+describe("Arrays", function () {
     this.timeout(100000);
 
     it("Checking the compilation of a simple circuit generating wasm", async function () {
 
         const circuit = await wasm_tester(
-            path.join(__dirname, "Multiplier2.circom")
+            path.join(__dirname, "Arrays.circom")
         );
-        const w = await circuit.calculateWitness({a: 2, b: 4});
+        const w = await circuit.calculateWitness(testInput);
+
+        const outputs = await circuit.getOutput(w, {"a": [2, 2], "commitment": 1});
         await circuit.checkConstraints(w);
+        console.log(outputs);
     });
 
     it("Checking the compilation of a simple circuit generating wasm in a given folder", async function () {
         const circuit = await wasm_tester(
-            path.join(__dirname, "Multiplier2.circom"),
+            path.join(__dirname, "Arrays.circom"),
             {
                 output: path.join(__dirname),
             }
         );
-        const w = await circuit.calculateWitness({a: 2, b: 4});
+        const w = await circuit.calculateWitness(testInput);
         await circuit.checkConstraints(w);
     });
 
     it("Checking the compilation of a simple circuit generating wasm in a given folder without recompiling", async function () {
         const circuit = await wasm_tester(
-            path.join(__dirname, "Multiplier2.circom"),
+            path.join(__dirname, "Arrays.circom"),
             {
                 output: path.join(__dirname),
                 recompile: false,
             }
         );
-        const w = await circuit.calculateWitness({a: 6, b: 3});
+        const w = await circuit.calculateWitness(testInput);
         await circuit.checkConstraints(w);
 
     });
 
     it("Checking the compilation of a simple circuit generating C", async function () {
         const circuit = await c_tester(
-            path.join(__dirname, "Multiplier2.circom")
+            path.join(__dirname, "Arrays.circom")
         );
         try {
-            const w = await circuit.calculateWitness({a: 2, b: 4});
+            const w = await circuit.calculateWitness(testInput);
             await circuit.checkConstraints(w);
         } catch (e) {
             if (e.message.includes("Illegal instruction")) {
@@ -67,13 +75,13 @@ describe("Simple test", function () {
 
     it("Checking the compilation of a simple circuit generating C in a given folder", async function () {
         const circuit = await c_tester(
-            path.join(__dirname, "Multiplier2.circom"),
+            path.join(__dirname, "Arrays.circom"),
             {
                 output: path.join(__dirname),
             }
         );
         try {
-            const w = await circuit.calculateWitness({a: 2, b: 4});
+            const w = await circuit.calculateWitness(testInput);
             await circuit.checkConstraints(w);
         } catch (e) {
             if (e.message.includes("Illegal instruction")) {
@@ -86,14 +94,14 @@ describe("Simple test", function () {
 
     it("Checking the compilation of a simple circuit generating C in a given folder without recompiling", async function () {
         const circuit = await c_tester(
-            path.join(__dirname, "Multiplier2.circom"),
+            path.join(__dirname, "Arrays.circom"),
             {
                 output: path.join(__dirname),
                 recompile: false,
             }
         );
         try {
-            const w = await circuit.calculateWitness({a: 6, b: 3});
+            const w = await circuit.calculateWitness(testInput);
             await circuit.checkConstraints(w);
         } catch (e) {
             if (e.message.includes("Illegal instruction")) {
