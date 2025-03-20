@@ -195,32 +195,42 @@ class WasmTester {
         return get_by_prefix("main", output);
 
         function get_by_prefix(prefix, out) {
-            let result = {};
-            if ((typeof out == "object") && (out.constructor.name == "Object")) {
-                for (let k in out) {
-                    result[k] = get_by_prefix(`${prefix}.${k}`, out[k]);
-                }
+            if (typeof out == "object" && out.constructor.name == "Object") {
+                return Object.fromEntries(
+                    Object.entries(out).map(([k, v]) => [
+                        k,
+                        get_by_prefix(`${prefix}.${k}`, v),
+                    ])
+                );
             } else if (Array.isArray(out)) {
                 if (out.length == 1) {
-                    result = get_by_prefix(prefix, out[0]);
+                    return get_by_prefix(prefix, out[0]);
                 } else if (out.length == 0 || out.length > 2) {
                     assert(false, `Invalid output format: ${prefix} ${out}`);
                 }
-                let result_i = [];
-                for (let i = 0; i < out[0]; i++) {
-                    result_i.push(get_by_prefix(`${prefix}[${i}]`, out[1]));
-                }
-                result = result_i;
+
+                return Array.from({ length: out[0] }, (_, i) =>
+                    get_by_prefix(`${prefix}[${i}]`, out[1])
+                );
             } else {
-                let result_i = [];
-                for (let i = 0; i < out; i++) {
-                    const name = `${prefix}[${i}]`;
+                if (out == 1) {
+                    const name = `${prefix}`;
                     if (typeof self.symbols[name] == "undefined") {
                         assert(false, `Output variable not defined: ${name}`);
                     }
-                    result_i.push(witness[self.symbols[name].varIdx]);
+                    return witness[self.symbols[name].varIdx];
+                } else {
+                    return Array.from({ length: out }, (_, i) => {
+                        const name = `${prefix}[${i}]`;
+                        if (typeof self.symbols[name] == "undefined") {
+                            assert(
+                                false,
+                                `Output variable not defined: ${name}`
+                            );
+                        }
+                        return witness[self.symbols[name].varIdx];
+                    });
                 }
-                result = result_i;
             }
 
             return result;
