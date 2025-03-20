@@ -15,7 +15,6 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: 'npm'
       - run: npm ci
-      - run: npm run build
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.IDEN3_CIRCOM_NPM_PUBLISH_TOKEN}}
