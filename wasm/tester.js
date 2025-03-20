@@ -188,11 +188,22 @@ class WasmTester {
         return lines.join("\n");
     }
 
-    async getOutput(witness, output) {
+    async getOutput(witness, output, templateName = "main") {
         const self = this;
         if (!self.symbols) await self.loadSymbols();
 
-        return get_by_prefix("main", output);
+        let prefix = "main";
+        if (templateName != "main") {
+            const regex = new RegExp(`^.*${templateName}[^.]*\.[^.]+$`);
+            Object.keys(self.symbols).find((k) => {
+                if (regex.test(k)) {
+                    prefix = k.replace(/\.[^.]+$/, "");
+                    return true;
+                }
+            });
+        }
+
+        return get_by_prefix(prefix, output);
 
         function get_by_prefix(prefix, out) {
             if (typeof out == "object" && out.constructor.name == "Object") {
