@@ -4,7 +4,7 @@
   "description": "Tools for testing circom circuits.",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha -p 'test/*.js'"
+    "test": "./node_modules/.bin/mocha -p 'test/*/*.js'"
   },
   "repository": {
     "type": "git",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@types/chai": "^4.3.6",
     "@types/mocha": "^10.0.1",
-    "mocha": "^10.1.0"
+    "mocha": "^10.1.0",
+    "circomlib": "^2.0.5"
   }
 }
