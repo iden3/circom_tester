@@ -32,7 +32,7 @@ describe("Multiplier2", function () {
         const circuit = await wasm_tester(
             path.join(__dirname, "Multiplier2.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
             }
         );
         const w = await circuit.calculateWitness({a: 2, b: 4});
@@ -43,7 +43,7 @@ describe("Multiplier2", function () {
         const circuit = await wasm_tester(
             path.join(__dirname, "Multiplier2.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
                 recompile: false,
             }
         );
@@ -75,7 +75,7 @@ describe("Multiplier2", function () {
         const circuit = await c_tester(
             path.join(__dirname, "Multiplier2.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
             }
         );
         try {
@@ -94,7 +94,7 @@ describe("Multiplier2", function () {
         const circuit = await c_tester(
             path.join(__dirname, "Multiplier2.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
                 recompile: false,
             }
         );
