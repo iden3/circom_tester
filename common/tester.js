@@ -70,6 +70,9 @@ async function compile(baseName, fileName, options) {
     if (options.O === 1) flags += "--O1 ";
     if (options.verbose) flags += "--verbose ";
     if (options.inspect) flags += "--inspect ";
+    if (options.simplification_substitution) flags += "--simplification_substitution ";
+    if (options.no_asm) flags += "--no_asm ";
+    if (options.no_init) flags += "--no_init ";
 
     try {
         let b = await exec("circom " + flags + fileName);
