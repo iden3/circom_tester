@@ -34,7 +34,7 @@ describe("Arrays", function () {
         const circuit = await wasm_tester(
             path.join(__dirname, "Arrays.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
             }
         );
         const w = await circuit.calculateWitness(testInput);
@@ -45,7 +45,7 @@ describe("Arrays", function () {
         const circuit = await wasm_tester(
             path.join(__dirname, "Arrays.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
                 recompile: false,
             }
         );
@@ -77,7 +77,7 @@ describe("Arrays", function () {
         const circuit = await c_tester(
             path.join(__dirname, "Arrays.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
             }
         );
         try {
@@ -96,7 +96,7 @@ describe("Arrays", function () {
         const circuit = await c_tester(
             path.join(__dirname, "Arrays.circom"),
             {
-                output: path.join(__dirname),
+                output: path.join(__dirname, "tmp"),
                 recompile: false,
             }
         );
