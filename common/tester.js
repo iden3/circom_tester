@@ -4,6 +4,7 @@ const { F1Field } = require("ffjavascript");
 const { readR1cs } = require("r1csfile");
 const util = require("util");
 const tmp = require("tmp-promise");
+const { createHash } = require('crypto');
 const exec = util.promisify(require("child_process").exec);
 
 async function parseOptionsAndCompile(circomInput, options) {
@@ -12,7 +13,7 @@ async function parseOptionsAndCompile(circomInput, options) {
         throw new Error("Wrong compiler version. Must be at least 2.0.0");
     }
 
-    const baseName = path.basename(circomInput, ".circom");
+    let baseName = path.basename(circomInput, ".circom");
 
     options.sym = true;
     options.baseName = baseName;
@@ -20,6 +21,7 @@ async function parseOptionsAndCompile(circomInput, options) {
     options.r1cs = true;
     options.compile = (typeof options.recompile === 'undefined') ? true : options.recompile; // by default compile
 
+    // if output is not set, create a temporary directory
     if (typeof options.output === 'undefined') {
         tmp.setGracefulCleanup();
         const dir = await tmp.dir({prefix: "circom_", unsafeCleanup: true});
@@ -34,6 +36,107 @@ async function parseOptionsAndCompile(circomInput, options) {
             await fs.promises.mkdir(options.output, {recursive: true});
         }
     }
+
+    // read contents of circomInput
+    const circomCode = await fs.promises.readFile(circomInput, "utf8");
+
+    // check if circomCode has main component instantiated
+    const mainRegex = /^\s*component\s+main(\s|=)/m;
+    const mainDefined = mainRegex.test(circomCode);
+
+    // if main is not defined, get all template names
+    const templateNames = [];
+    const pragmaLines = [];
+    if (!mainDefined) {
+        // get all pragma lines to put in temporary circom file
+        const pragmaRegex = /^\s*pragma\s+.*$/gm;
+        let pragmaMatches;
+        while ((pragmaMatches = pragmaRegex.exec(circomCode)) !== null) {
+            pragmaLines.push(pragmaMatches[0]);
+        }
+
+        // get all template names
+        const templateRegex = /^\s*template\s+([a-zA-Z0-9_$]+)\s*\(/gm;
+        let templateMatches;
+        while ((templateMatches = templateRegex.exec(circomCode)) !== null) {
+            templateNames.push(templateMatches[1]);
+        }
+    }
+
+    // check for conflicting options
+    if (mainDefined) {
+        if (options.templateName || options.templateParams || options.templatePublicSignals) {
+            throw new Error("Cannot set template name, params and public signals if main is already defined");
+        }
+    }
+
+    // when main is not defined, create temporary circom file using specified template as a main component
+    if (!mainDefined) {
+        // if templateName is not provided, try to autodetect it
+        if (!options.templateName) {
+            // if file has only one template, use it as main component
+            if (templateNames.length === 1) {
+                options.templateName = templateNames[0];
+            } else {
+                throw new Error("No main component defined and template name to generate one is not provided");
+            }
+        }
+
+        // define main component with templateName
+        let params = "";
+        if (options.templateParams) {
+            params = options.templateParams.map((p) => p.toString()).join(", ");
+        }
+
+        // define public signals if any
+        let publicSignals = "";
+        if (options.templatePublicSignals) {
+            publicSignals = "{public [" + options.templatePublicSignals.map((p) => p.toString()).join(", ") + "]}";
+        }
+
+        // define main component
+        const mainComponent = `component main ${publicSignals} = ${options.templateName}(${params});`;
+
+        // include original circom file
+        const includes = "include \"" + baseName + ".circom\";";
+
+        const tmpCircomCodeLines = [...pragmaLines, includes, mainComponent];
+        const tmpCircomCode = tmpCircomCodeLines.join("\n");
+
+        // calculate the hash of the main component using sha256
+        const h = createHash("sha256");
+        const hash = h.update(Buffer.from(tmpCircomCode, "utf8")).digest('hex');
+        // and use it as a suffix for the temporary directory name inside the output path
+        let suffix = hash.substring(0, 8);
+        const tmpCircomPath = path.join(options.output, baseName + "_" + options.templateName + "_" + suffix);
+
+        // create the directory if it doesn't exist
+        await fs.promises.mkdir(tmpCircomPath, {recursive: true});
+
+        // add the original circom file directory to the include path
+        const includePath = path.dirname(path.resolve(circomInput));
+        if (options.include) {
+            if (Array.isArray(options.include)) {
+                options.include.push(includePath);
+            } else {
+                options.include = [options.include, includePath];
+            }
+        } else {
+            options.include = [includePath];
+        }
+
+        // override baseName, output path and circomInput
+        baseName = "circuit";
+        options.baseName = baseName;
+        options.output = tmpCircomPath;
+        circomInput = path.join(tmpCircomPath, baseName + ".circom");
+
+        // write the generated circom code to the temporary file circuit.circom
+        await fs.promises.writeFile(circomInput, tmpCircomCode, "utf8");
+
+    }
+
+    // compile flag is set by default, unless overwritten by recompile=false option
     if (options.compile) {
         await compile(baseName, circomInput, options);
     } else {
