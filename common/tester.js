@@ -171,6 +171,8 @@ async function compile(baseName, fileName, options) {
     if (options.prime) flags += "--prime " + options.prime + " ";
     if (options.O === 0) flags += "--O0 ";
     if (options.O === 1) flags += "--O1 ";
+    if (options.O === 2) flags += "--O2 ";
+    if (options.O2round) flags += "--O2round " + options.O2round + " ";
     if (options.verbose) flags += "--verbose ";
     if (options.inspect) flags += "--inspect ";
     if (options.simplification_substitution) flags += "--simplification_substitution ";
