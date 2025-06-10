@@ -41,7 +41,7 @@ async function parseOptionsAndCompile(circomInput, options) {
     const circomCode = await fs.promises.readFile(circomInput, "utf8");
 
     // check if circomCode has main component instantiated
-    const mainRegex = /^\s*component\s+main(\s|=)/m;
+    const mainRegex = /^\s*component\s+main[\s={\/]/m;
     const mainDefined = mainRegex.test(circomCode);
 
     // if main is not defined, get all template names
